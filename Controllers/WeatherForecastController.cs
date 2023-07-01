@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Pros.Database;
 
 namespace Pros.Controllers
 {
@@ -8,18 +10,25 @@ namespace Pros.Controllers
     {
         private readonly ILogger<WeatherForecastController> _logger;
         private readonly IWeatherClient _weatherClient;
+        public SchoolDatabaseContext _dbContext { get; set; }
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, IWeatherClient weatherClient)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, IWeatherClient weatherClient, SchoolDatabaseContext dbContext)
         {
             _logger = logger;
             _weatherClient = weatherClient;
+            _dbContext = dbContext;
         }
 
         [HttpGet(Name = "GetWeather")]
-        public async Task<List<object>> GetWeather()
+        //public async Task<List<object>> GetWeather()
+        public async Task<List<Student>> GetWeather()
         {
-            var response = await _weatherClient.GetDataAsync();
-            return response;
+
+            var students = _dbContext.Students.ToList();
+            return students;
+
+            //var response = await _weatherClient.GetDataAsync();
+            //return response;
         }
     }
 }
