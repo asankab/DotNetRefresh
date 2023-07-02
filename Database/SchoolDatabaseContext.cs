@@ -5,10 +5,10 @@ namespace Pros.Database
 {
     public class SchoolDatabaseContext: DbContext
     {
-        public SchoolDatabaseContext()
-        {
+        //public SchoolDatabaseContext()
+        //{
 
-        }
+        //}
 
         public SchoolDatabaseContext(DbContextOptions<SchoolDatabaseContext> options) : base(options)
         {

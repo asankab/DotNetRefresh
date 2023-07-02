@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
+// https://www.youtube.com/watch?v=g-JGay_lnWI
 public class OpenWeatherClient : IWeatherClient
 {
     private readonly IHttpClientFactory _httpClientFactory;
