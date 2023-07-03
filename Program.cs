@@ -40,6 +40,14 @@ builder.Host.ConfigureLogging(logging =>
 });
 
 
+builder.Services.AddApiVersioning(o =>
+{
+    o.AssumeDefaultVersionWhenUnspecified = true;
+    o.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
+    o.ReportApiVersions = true;
+});
+
+
 //builder.Services.AddCors(o =>
 //{
 //    o.AddPolicy("AllowAll",

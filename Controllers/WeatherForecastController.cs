@@ -12,8 +12,11 @@ using System.Collections.Generic;
 
 namespace Pros.Controllers
 {
+
+   //ApiVersion("1.0"), Deprecated = true]
+    [ApiVersion("1.0")]
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class WeatherForecastController : ControllerBase
     {
         private readonly ILogger<WeatherForecastController> _logger;
