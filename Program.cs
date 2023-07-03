@@ -10,6 +10,10 @@ using Microsoft.Extensions.Logging.AzureAppServices;
 using HealthChecks.UI.Client;
 using Pros.Exceptions;
 using Microsoft.AspNetCore.ResponseCompression;
+using Hangfire;
+using Hangfire.SQLite;
+using Hangfire.Dashboard.BasicAuthorization;
+using System.Net;
 
 // https://www.milanjovanovic.tech/blog
 var builder = WebApplication.CreateBuilder(args);
@@ -35,15 +39,47 @@ builder.Host.ConfigureLogging(logging =>
     logging.AddConsole();
 });
 
+
+//builder.Services.AddCors(o =>
+//{
+//    o.AddPolicy("AllowAll",
+//        builder =>
+//        {
+//            builder.AllowAnyOrigin()
+//                   .AllowAnyMethod()
+//                   .AllowAnyHeader();
+//        });
+//});
+
+builder.Services.AddCors(o =>
+{
+    o.AddPolicy("Restricted",
+        builder =>
+        {
+            builder.WithOrigins("https://trustedwebsite.com")
+                   .WithMethods("GET", "POST")
+                   .WithHeaders("Authorization");
+        });
+});
+
+
+// https://www.youtube.com/watch?v=Xafuut_KAB0
+builder.Services.AddHangfire(config => config
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+ .UseSqlServerStorage(builder.Configuration.GetConnectionString("SchoolDatabase")));
+
+builder.Services.AddHangfireServer();
+
+builder.Services.AddTransient<IServiceManagement, ServiceManagement>();
+
 builder.Services.AddTransient<GlobalExceptionHandler>();
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
 builder.Host.UseSerilog((context, configuration) =>
-{
     configuration.ReadFrom.Configuration(context.Configuration)
-    .Enrich.FromLogContext();
-});
+);
 
 builder.Services.AddScoped(
     typeof(IPipelineBehavior<,>),
@@ -148,5 +184,40 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseHangfireDashboard("/hangfire", new DashboardOptions()
+{
+    DashboardTitle = "Drivers Dashboard",
+    Authorization = new[]
+    {
+            //dotnet add package Hangfire.Dashboard.Basic.Authentication --version 7.0.1
+            //new HangfireCustomBasicAuthenticationFilter()
+            //{
+            //    Pass = "Password",
+            //    User = "asanka"
+            //    //User = _configuration.GetSection("HangfireSettings:UserName").Value,
+            //    //        Pass = _configuration.GetSection("HangfireSettings:Password").Value
+            //}
+
+            new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
+            {
+                SslRedirect = false,
+                RequireSsl = false,
+                LoginCaseSensitive = true,
+                Users = new []
+                {
+                    new BasicAuthAuthorizationUser
+                    {
+                        Login = "Password",
+                        PasswordClear = "Password"
+                    }
+                }
+            })
+    }
+});
+
+app.MapHangfireDashboard();
+
+RecurringJob.AddOrUpdate<IServiceManagement>("MyJob", x => x.SyncData(), "0 * * ? * *");
 
 app.Run();
